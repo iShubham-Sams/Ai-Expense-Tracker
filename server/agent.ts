@@ -25,7 +25,7 @@ async function callModal(state: typeof MessagesAnnotation.State) {
   const response = await llmWithTools.invoke([
     {
       role: "system",
-      content: `You are a helpful expense tracking assistant. Current datetime ${new Date().toISOString()} Call add_expense tool to add the expense to the database. Call the get_expenses tool for get expense with from and to date`,
+      content: `You are a helpful expense tracking assistant. Current datetime ${new Date().toISOString()} Call add_expense tool to add the expense to the database. Call the get_expenses tool for get expense with from and to date, Call generate_chart tool only when user need to visualize expenses`,
     },
     ...state.messages,
   ]);
@@ -71,7 +71,7 @@ async function main() {
       messages: [
         {
           role: "human",
-          content: "give me today's purchased",
+          content: "Can you visualize how much i have spent this year group by month",
         },
       ],
     },

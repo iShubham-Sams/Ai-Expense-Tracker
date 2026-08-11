@@ -9,6 +9,13 @@ type Expense = {
   date: string;
 };
 
+type ChartGroup = "month" | "week" | "date";
+
+type ChartRow = {
+  period: string;
+  total: number;
+};
+
 export function initTools(database: DatabaseSync) {
   // add expense tools
   const addExpense = tool(
@@ -57,5 +64,42 @@ export function initTools(database: DatabaseSync) {
     },
   );
 
-  return [addExpense, getExpenses];
+  //   generate chart
+  const generateChart = tool(
+    ({ from, groupBy, to }) => {
+      const periodExpressions: Record<ChartGroup, string> = {
+        month: "strftime('%Y-%m', date)",
+        week: "strftime('%Y-W%W', date)",
+        date: "date(date)",
+      };
+      const periodExpression = periodExpressions[groupBy];
+      const query = `
+        SELECT ${periodExpression} AS period, SUM(amount) AS total
+        FROM expense
+        WHERE date BETWEEN ? AND ?
+        GROUP BY ${periodExpression}
+        ORDER BY period ASC
+      `;
+
+      const stmt = database.prepare(query);
+      const data = stmt.all(from, to) as ChartRow[];
+      console.log(JSON.stringify(data), "data");
+      return JSON.stringify({
+        status: "Success",
+        groupBy,
+        data,
+      });
+    },
+    {
+      name: "generate_chart",
+      description: "Generate expense chart by querying database and grouping by month, and week or date",
+      schema: z.object({
+        from: z.string().describe("Start date for expenses in YYYY-MM-DD format"),
+        to: z.string().describe("End date for expenses in YYYY-MM-DD format"),
+        groupBy: z.enum(["month", "week", "date"]).describe("How to group the data: by month, week or date."),
+      }),
+    },
+  );
+
+  return [addExpense, getExpenses, generateChart];
 }
