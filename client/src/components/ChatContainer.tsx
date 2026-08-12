@@ -1,8 +1,44 @@
+import { Fragment, useState } from "react";
 import { ChatInput } from "./ChatInput";
-import { ChatMessage } from "./ChatMessages";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 
-const messages = ["message1"];
 export function ChatContainer() {
+  const [messages, setMessage] = useState<string[]>([]);
+  async function submitQuery() {
+    await fetchEventSource("http://localhost:8080/chat", {
+      async onopen(response) {
+        console.log("SSE connected", response.status);
+      },
+      onmessage(ev) {
+        console.log("SSE message", ev.event, ev.data);
+        setMessage((current) => [...current, ev.data]);
+      },
+      onerror(error) {
+        console.error("SSE error", error);
+        throw error;
+      },
+      method: "POST",
+      body: JSON.stringify({
+        query: "Hi",
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+  // useEffect(() => {
+  //   const eventSource = new EventSource("http://localhost:8080/chat");
+  //   eventSource.addEventListener("open", () => {
+  //     console.log("connection opened!");
+  //   });
+  //   eventSource.addEventListener("cgPing", (data) => {
+  //     setMessage((e) => [...e, data.data]);
+  //     console.log("cp ping message=========>", data);
+  //   });
+  //   eventSource.addEventListener("error", (error) => {
+  //     console.error("Error happen in event source", error);
+  //   });
+  // }, []);
   return (
     <div className="flex flex-col h-screen w-full bg-zinc-950">
       {/* Header */}
@@ -70,8 +106,17 @@ export function ChatContainer() {
             </div>
           ) : (
             <div className="divide-y divide-zinc-800/50">
+              {messages.map((mes, idx) => {
+                return (
+                  <Fragment key={idx}>
+                    <div className="text-white">
+                      {mes} {idx}
+                    </div>
+                  </Fragment>
+                );
+              })}
               {/* Messages will be displayed here... */}
-              <ChatMessage />
+              {/* <ChatMessage /> */}
             </div>
           )}
         </div>
@@ -81,6 +126,9 @@ export function ChatContainer() {
       <div className="shrink-0 w-full">
         <ChatInput />
       </div>
+      <button onClick={submitQuery} className="bg-white">
+        click
+      </button>
     </div>
   );
 }
