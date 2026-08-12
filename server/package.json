@@ -7,15 +7,20 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev":"node --watch --env-file=.env server.ts"
   },
   "dependencies": {
     "@langchain/core": "^1.2.5",
     "@langchain/langgraph": "^1.4.9",
     "@langchain/openai": "^1.5.6",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.2.0"
   }
 }
