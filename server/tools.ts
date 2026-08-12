@@ -83,11 +83,18 @@ export function initTools(database: DatabaseSync) {
 
       const stmt = database.prepare(query);
       const data = stmt.all(from, to) as ChartRow[];
-      console.log(JSON.stringify(data), "data");
+
+      const result = data.map((val) => {
+        return {
+          [groupBy]: val.period,
+          amount: val.total,
+        };
+      });
+
       return JSON.stringify({
-        status: "Success",
-        groupBy,
-        data,
+        type: "chart",
+        data: result,
+        labelKey: groupBy,
       });
     },
     {

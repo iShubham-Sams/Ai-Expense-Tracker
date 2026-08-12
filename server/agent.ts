@@ -3,7 +3,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { initDB } from "./db.ts";
 import { initTools } from "./tools.ts";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { AIMessage } from "@langchain/core/messages";
+import { AIMessage, ToolMessage } from "@langchain/core/messages";
 
 // init database
 
@@ -48,6 +48,14 @@ function shouldCallTools(state: typeof MessagesAnnotation.State) {
 
 function shouldCallModal(state: typeof MessagesAnnotation.State) {
   // change this when chart modal will be implemented
+  const messages = state.messages;
+  const lastMessage = messages.at(-1) as ToolMessage;
+
+  const parseMessage = JSON.parse(lastMessage.content as string);
+
+  if (parseMessage.type == "chart") {
+    return "__end__";
+  }
   return "callModal";
 }
 
@@ -60,13 +68,14 @@ const graph = new StateGraph(MessagesAnnotation)
     tools: "tools",
   })
   .addConditionalEdges("tools", shouldCallModal, {
+    __end__: "__end__",
     callModal: "callModal",
   });
 
 const agent = graph.compile({ checkpointer: new MemorySaver() });
 
 async function main() {
-  const response = await agent.invoke(
+  const response = await agent.stream(
     {
       messages: [
         {
@@ -75,9 +84,15 @@ async function main() {
         },
       ],
     },
-    { configurable: { thread_id: "1" } },
+    { configurable: { thread_id: "1" }, streamMode: "updates" },
   );
-  console.log(JSON.stringify(response, null, 2));
+
+  for await (const chunk of response) {
+    const [step, content] = Object.entries(chunk)[0];
+    console.log(`step: ${step}`);
+    console.log(`content: ${JSON.stringify(content, null, 2)}`);
+  }
+  // console.log(JSON.stringify(response, null, 2));
 }
 
 main();
