@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@tailwindcss/vite": "^4.3.3",
+    "lucide-react": "^0.555.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"
