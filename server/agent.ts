@@ -72,27 +72,25 @@ const graph = new StateGraph(MessagesAnnotation)
     callModal: "callModal",
   });
 
-const agent = graph.compile({ checkpointer: new MemorySaver() });
+export const agent = graph.compile({ checkpointer: new MemorySaver() });
 
-async function main() {
-  const response = await agent.stream(
-    {
-      messages: [
-        {
-          role: "human",
-          content: "Can you visualize how much i have spent this year group by month",
-        },
-      ],
-    },
-    { configurable: { thread_id: "1" }, streamMode: "updates" },
-  );
+// async function main() {
+//   const response = await agent.stream(
+//     {
+//       messages: [
+//         {
+//           role: "human",
+//           content: "Can you visualize how much i have spent this year group by month",
+//         },
+//       ],
+//     },
+//     { configurable: { thread_id: "1" }, streamMode: "updates" },
+//   );
 
-  for await (const chunk of response) {
-    const [step, content] = Object.entries(chunk)[0];
-    console.log(`step: ${step}`);
-    console.log(`content: ${JSON.stringify(content, null, 2)}`);
-  }
-  // console.log(JSON.stringify(response, null, 2));
-}
-
-main();
+//   for await (const chunk of response) {
+//     const [step, content] = Object.entries(chunk)[0];
+//     console.log(`step: ${step}`);
+//     console.log(`content: ${JSON.stringify(content, null, 2)}`);
+//   }
+//   console.log(JSON.stringify(response, null, 2));
+// }
