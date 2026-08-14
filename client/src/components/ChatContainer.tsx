@@ -2,18 +2,43 @@ import { Fragment, useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { ChatMessage } from "./ChatMessages";
+import type { StreamMessage } from "../types";
 
 export function ChatContainer() {
-  const [messages, setMessage] = useState<string>("");
+  const [messages, setMessage] = useState<StreamMessage[]>([]);
+
+  const setMessagesData = (payload: StreamMessage) => {
+    if (payload.type == "ai") {
+      setMessage((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage.type == "ai") {
+          const clonedMessage = [...prev];
+          clonedMessage[clonedMessage.length - 1] = {
+            ...lastMessage,
+            payload: {
+              text: lastMessage.payload.text + payload.payload.text,
+            },
+          };
+          return clonedMessage;
+        } else {
+          return [...prev, payload];
+        }
+      });
+    }
+  };
 
   async function onSubmitClick(query: string) {
+    // set user question
+    setMessage((pre) => [...pre, { type: "user", payload: { text: query } }]);
+
+    // call stream api
     await fetchEventSource("http://localhost:8080/chat", {
       async onopen(response) {
         console.log("SSE connected", response.status);
       },
       onmessage(ev) {
-        console.log("SSE message", ev.event, ev.data);
-        setMessage((current) => (current += ev.data));
+        const parseData = JSON.parse(ev.data) as StreamMessage;
+        setMessagesData(parseData);
       },
       onerror(error) {
         console.error("SSE error", error);
@@ -95,10 +120,10 @@ export function ChatContainer() {
             </div>
           ) : (
             <div className="divide-y divide-zinc-800/50">
-              <div className="text-white">{messages}</div>
-
               {/* Messages will be displayed here... */}
-              {/* <ChatMessage /> */}
+              {messages.map((mes, idx) => {
+                return <ChatMessage key={idx} message={mes} />;
+              })}
             </div>
           )}
         </div>
